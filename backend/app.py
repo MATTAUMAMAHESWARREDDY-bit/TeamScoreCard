@@ -11,9 +11,19 @@ UPLOAD_FOLDER = os.path.join(BASE_DIR, "certificates")
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-DB_PATH = os.path.join(BASE_DIR, "database.db")
+# -----------------------------
+# Changed Lines
+# -----------------------------
+DB_PATH = os.path.join(os.getcwd(), "database.db")  # changed
 
-app = Flask(__name__, static_folder=FRONTEND_DIR)
+app = Flask(
+    __name__,
+    static_folder=FRONTEND_DIR,
+    static_url_path=""  # changed
+)
+
+app.secret_key = os.environ.get("SECRET_KEY", "dev")  # changed
+
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
 # -----------------------------
@@ -217,8 +227,6 @@ def download_certificate(regno):
 # -----------------------------
 # Run App
 # -----------------------------
-import os
-
 if __name__ == "__main__":
     init_db()
     port = int(os.environ.get("PORT", 10000))
