@@ -4,28 +4,32 @@
 <title>Login</title>
 
 <style>
-body{
+/* Full-page background image */
+body, html {
     margin:0;
-    height:100vh;
+    padding:0;
+    height:100%;
+    font-family:Segoe UI, Arial;
     display:flex;
     justify-content:center;
     align-items:center;
-    background:linear-gradient(135deg,#667eea,#764ba2);
-    font-family:Segoe UI, Arial;
+    background: url('https://static.vecteezy.com/system/resources/thumbnails/034/878/338/small_2x/a-rotating-robotic-arm-in-the-neon-background-3d-rendering-video.jpg') no-repeat center center fixed;
+    background-size: cover;
 }
 
+/* Centered login box with blue color */
 .login-box{
     width:380px;
-    background:white;
+    background: #1E3A8A; /* solid blue color */
     padding:45px;
     border-radius:20px;
-    box-shadow:0 20px 40px rgba(0,0,0,0.25);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+    color:white;
 }
 
 .login-box h2{
     text-align:center;
     margin-bottom:30px;
-    color:#333;
     font-weight:600;
 }
 
@@ -44,21 +48,22 @@ button{
     margin-top:18px;
     border:none;
     border-radius:10px;
-    background:#667eea;
+    background:#3B82F6; /* lighter blue button */
     color:white;
     font-size:16px;
     cursor:pointer;
+    transition: background 0.3s;
 }
 
 button:hover{
-    background:#5a67d8;
+    background:#2563EB; /* darker blue on hover */
 }
 
 .footer{
     text-align:center;
     margin-top:22px;
     font-size:13px;
-    color:#666;
+    color:white;
 }
 </style>
 </head>
@@ -68,7 +73,6 @@ button:hover{
 <div class="login-box">
     <h2>Kalasalingam University</h2>
 
-    <!-- Fixed: submit to backend /login -->
     <form id="loginForm" method="POST" action="/login">
         <input type="text" name="username"
                placeholder="Register Number"

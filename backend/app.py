@@ -8,22 +8,20 @@ import os
 BASE_DIR = os.path.dirname(__file__)
 FRONTEND_DIR = os.path.join(BASE_DIR, "../frontend")
 UPLOAD_FOLDER = os.path.join(BASE_DIR, "certificates")
-
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # -----------------------------
-# Changed Lines
+# Config
 # -----------------------------
-DB_PATH = os.path.join(os.getcwd(), "database.db")  # changed
+DB_PATH = os.path.join(os.getcwd(), "database.db")
 
 app = Flask(
     __name__,
     static_folder=FRONTEND_DIR,
-    static_url_path=""  # changed
+    static_url_path=""
 )
 
-app.secret_key = os.environ.get("SECRET_KEY", "dev")  # changed
-
+app.secret_key = os.environ.get("SECRET_KEY", "dev")
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
 # -----------------------------
@@ -55,9 +53,10 @@ def init_db():
         )
     """)
 
-    # Scores table
+    # Scores table (with auto-increment id)
     cur.execute("""
         CREATE TABLE IF NOT EXISTS scores (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
             teamno TEXT,
             teamname TEXT,
             score INTEGER
@@ -129,7 +128,6 @@ def add_user():
 
     conn = sqlite3.connect(DB_PATH)
     cur = conn.cursor()
-
     try:
         cur.execute(
             "INSERT INTO users (regno,name,teamname,teamno,email) VALUES (?,?,?,?,?)",
@@ -153,7 +151,7 @@ def add_score():
 
     conn = sqlite3.connect(DB_PATH)
     cur = conn.cursor()
-    cur.execute("INSERT INTO scores VALUES (?,?,?)", (teamno, teamname, score))
+    cur.execute("INSERT INTO scores (teamno,teamname,score) VALUES (?,?,?)", (teamno, teamname, score))
     conn.commit()
     conn.close()
     return "Score added successfully"
@@ -179,30 +177,22 @@ def add_certificate():
     return "Certificate uploaded successfully"
 
 # -----------------------------
-# Get Profile
+# Get Users (for manage section)
 # -----------------------------
-@app.route("/get_profile/<regno>")
-def get_profile(regno):
+@app.route("/get_users")
+def get_users():
     conn = sqlite3.connect(DB_PATH)
     cur = conn.cursor()
-    cur.execute("SELECT * FROM users WHERE regno=?", (regno,))
-    user = cur.fetchone()
+    cur.execute("SELECT * FROM users ORDER BY name")
+    users = cur.fetchall()
     conn.close()
-    if user:
-        return jsonify({
-            "regno": user[0],
-            "name": user[1],
-            "teamname": user[2],
-            "teamno": user[3],
-            "email": user[4]
-        })
-    return jsonify({"error": "User not found"})
+    return jsonify({"users": users})
 
 # -----------------------------
-# Get Scores
+# Get Scores (admin)
 # -----------------------------
-@app.route("/get_scores")
-def get_scores():
+@app.route("/get_scores_admin")
+def get_scores_admin():
     conn = sqlite3.connect(DB_PATH)
     cur = conn.cursor()
     cur.execute("SELECT * FROM scores ORDER BY score DESC")
@@ -211,18 +201,28 @@ def get_scores():
     return jsonify({"scores": scores})
 
 # -----------------------------
-# Download Certificate
+# Delete User
 # -----------------------------
-@app.route("/download_certificate/<regno>")
-def download_certificate(regno):
+@app.route("/delete_user/<regno>", methods=["POST"])
+def delete_user(regno):
     conn = sqlite3.connect(DB_PATH)
     cur = conn.cursor()
-    cur.execute("SELECT filename FROM certificates WHERE regno=?", (regno,))
-    row = cur.fetchone()
+    cur.execute("DELETE FROM users WHERE regno=?", (regno,))
+    conn.commit()
     conn.close()
-    if row:
-        return send_from_directory(UPLOAD_FOLDER, row[0], as_attachment=True)
-    return "Certificate not found"
+    return jsonify({"message": f"User {regno} deleted successfully"})
+
+# -----------------------------
+# Delete Score
+# -----------------------------
+@app.route("/delete_score/<int:id>", methods=["POST"])
+def delete_score(id):
+    conn = sqlite3.connect(DB_PATH)
+    cur = conn.cursor()
+    cur.execute("DELETE FROM scores WHERE id=?", (id,))
+    conn.commit()
+    conn.close()
+    return jsonify({"message": f"Score deleted successfully"})
 
 # -----------------------------
 # Run App
