@@ -44,16 +44,22 @@ body{
 .main{
     margin-left:240px;
     padding:60px;
+    display:flex;
+    flex-direction: column;
+    align-items: center;
 }
 
+/* CARD STYLES */
 .card{
     background:white;
-    width:520px;
+    width:100%;
+    max-width:600px;
     padding:35px;
     border-radius:16px;
     box-shadow:0 12px 25px rgba(0,0,0,0.12);
     animation:fade 0.4s;
     margin-bottom:25px;
+    display:none; /* hidden by default */
 }
 
 @keyframes fade{
@@ -66,7 +72,7 @@ body{
     color:#1e293b;
 }
 
-input,button.submit{
+input, button.submit{
     width:100%;
     padding:12px;
     margin:12px 0;
@@ -86,6 +92,19 @@ button.submit:hover{
     background:#1d4ed8;
 }
 
+button.delete{
+    background:#ef4444;
+    color:white;
+    border:none;
+    padding:6px 12px;
+    border-radius:6px;
+    cursor:pointer;
+}
+
+button.delete:hover{
+    background:#b91c1c;
+}
+
 .message{
     color: green;
     font-weight: bold;
@@ -94,15 +113,61 @@ button.submit:hover{
 .error{
     color: red;
 }
+
+/* TABLE STYLES */
+table{
+    border-collapse: collapse;
+    width: 100%;
+    margin-top: 12px;
+}
+table th, table td{
+    border: 1px solid #cbd5e1;
+    padding: 8px;
+    text-align: left;
+}
+table th{
+    background: #f1f5f9;
+}
+table tr:nth-child(even){
+    background:#f9fafb;
+}
+table tr:hover{
+    background:#e2e8f0;
+}
+
+/* Tabs for Manage Section */
+.manage-tabs{
+    display:flex;
+    margin-bottom: 15px;
+}
+.manage-tabs button{
+    flex:1;
+    padding:10px;
+    border:none;
+    cursor:pointer;
+    background:#e2e8f0;
+    font-weight:bold;
+}
+.manage-tabs button.active{
+    background:#2563eb;
+    color:white;
+}
 </style>
 
 <script>
-// Show sections
+// Show main sections
 function show(section){
-    document.getElementById("user").style.display="none";
-    document.getElementById("score").style.display="none";
-    document.getElementById("cert").style.display="none";
+    const sections = ["user","score","cert","manage"];
+    sections.forEach(s=>{
+        document.getElementById(s).style.display="none";
+    });
     document.getElementById(section).style.display="block";
+
+    if(section==="manage"){
+        showManage("users"); // default to users tab
+    }
+
+    document.getElementById(section).scrollIntoView({behavior:"smooth"});
 }
 
 // Add User
@@ -111,12 +176,12 @@ function addUser(){
     const formData = new FormData(form);
 
     fetch("/add_user", {method:"POST", body:formData})
-    .then(res=>res.json())
-    .then(data=>{
-        const msg = document.getElementById("userMsg");
-        msg.textContent = data.message;
-        msg.className = data.message.includes("success") ? "message" : "message error";
-        if(data.message.includes("success")) form.reset();
+    .then(res=>res.text())
+    .then(msg=>{
+        const message = document.getElementById("userMsg");
+        message.textContent = msg;
+        message.className = msg.includes("success") ? "message" : "message error";
+        if(msg.includes("success")) form.reset();
     });
 }
 
@@ -126,11 +191,11 @@ function addScore(){
     const formData = new FormData(form);
 
     fetch("/add_score",{method:"POST", body:formData})
-    .then(res=>res.json())
-    .then(data=>{
-        const msg = document.getElementById("scoreMsg");
-        msg.textContent = data.message;
-        msg.className = "message";
+    .then(res=>res.text())
+    .then(msg=>{
+        const message = document.getElementById("scoreMsg");
+        message.textContent = msg;
+        message.className = msg.includes("success") ? "message" : "message error";
         form.reset();
     });
 }
@@ -141,13 +206,89 @@ function uploadCert(){
     const formData = new FormData(form);
 
     fetch("/add_certificate",{method:"POST", body:formData})
-    .then(res=>res.json())
-    .then(data=>{
-        const msg = document.getElementById("certMsg");
-        msg.textContent = data.message;
-        msg.className = "message";
+    .then(res=>res.text())
+    .then(msg=>{
+        const message = document.getElementById("certMsg");
+        message.textContent = msg;
+        message.className = msg.includes("success") ? "message" : "message error";
         form.reset();
     });
+}
+
+// Manage Users & Scores tabs
+function showManage(tab){
+    document.getElementById("manageUsers").style.display = "none";
+    document.getElementById("manageScores").style.display = "none";
+    document.getElementById(tab==="users"?"manageUsers":"manageScores").style.display = "block";
+
+    document.getElementById("tabUsers").classList.remove("active");
+    document.getElementById("tabScores").classList.remove("active");
+    document.getElementById(tab==="users"?"tabUsers":"tabScores").classList.add("active");
+
+    if(tab==="users") loadUsers();
+    if(tab==="scores") loadScores();
+}
+
+// Load existing users
+function loadUsers(){
+    fetch("/get_users")
+    .then(res=>res.json())
+    .then(data=>{
+        let html = '<table><tr><th>RegNo</th><th>Name</th><th>Team</th><th>Team No</th><th>Email</th><th>Action</th></tr>';
+        data.users.forEach(u=>{
+            html += `<tr>
+                        <td>${u[0]}</td>
+                        <td>${u[1]}</td>
+                        <td>${u[2]}</td>
+                        <td>${u[3]}</td>
+                        <td>${u[4]}</td>
+                        <td><button class="delete" onclick="deleteUser('${u[0]}')">Delete</button></td>
+                     </tr>`;
+        });
+        html += '</table>';
+        document.getElementById("usersTable").innerHTML = html;
+    });
+}
+
+function deleteUser(regno){
+    if(confirm("Are you sure you want to delete this user?")){
+        fetch(`/delete_user/${regno}`, {method:"POST"})
+        .then(res=>res.json())
+        .then(data=>{
+            alert(data.message);
+            loadUsers();
+        });
+    }
+}
+
+// Load existing scores
+function loadScores(){
+    fetch("/get_scores_admin")
+    .then(res=>res.json())
+    .then(data=>{
+        let html = '<table><tr><th>Team No</th><th>Team Name</th><th>Score</th><th>Action</th></tr>';
+        data.scores.forEach(s=>{
+            html += `<tr>
+                        <td>${s[1]}</td>
+                        <td>${s[2]}</td>
+                        <td>${s[3]}</td>
+                        <td><button class="delete" onclick="deleteScore(${s[0]})">Delete</button></td>
+                     </tr>`;
+        });
+        html += '</table>';
+        document.getElementById("scoresTable").innerHTML = html;
+    });
+}
+
+function deleteScore(id){
+    if(confirm("Are you sure you want to delete this score?")){
+        fetch(`/delete_score/${id}`, {method:"POST"})
+        .then(res=>res.json())
+        .then(data=>{
+            alert(data.message);
+            loadScores();
+        });
+    }
 }
 </script>
 
@@ -160,6 +301,7 @@ function uploadCert(){
     <button onclick="show('user')">Add User</button>
     <button onclick="show('score')">Add Score</button>
     <button onclick="show('cert')">Add Certificate</button>
+    <button onclick="show('manage')">Manage Users & Scores</button>
     <button onclick="window.location.href='/login'">Logout</button>
 </div>
 
@@ -167,7 +309,7 @@ function uploadCert(){
 <div class="main">
 
     <!-- ADD USER -->
-    <div id="user" class="card">
+    <div id="user" class="card" style="display:block">
         <h3>Add User Details</h3>
         <form id="userForm" onsubmit="event.preventDefault(); addUser();">
             <input name="name" placeholder="Name" required>
@@ -175,14 +317,13 @@ function uploadCert(){
             <input name="teamno" placeholder="Team Number" required>
             <input name="regno" placeholder="Register Number" required>
             <input name="email" placeholder="Email Address" required>
-            <input name="dob" placeholder="Date of Birth (optional)">
             <button class="submit">Save User</button>
         </form>
         <div id="userMsg" class="message"></div>
     </div>
 
     <!-- ADD SCORE -->
-    <div id="score" class="card" style="display:none">
+    <div id="score" class="card">
         <h3>Add Team Score</h3>
         <form id="scoreForm" onsubmit="event.preventDefault(); addScore();">
             <input name="teamno" placeholder="Team Number" required>
@@ -194,7 +335,7 @@ function uploadCert(){
     </div>
 
     <!-- UPLOAD CERTIFICATE -->
-    <div id="cert" class="card" style="display:none">
+    <div id="cert" class="card">
         <h3>Add Certificate</h3>
         <form id="certForm" onsubmit="event.preventDefault(); uploadCert();" enctype="multipart/form-data">
             <input name="regno" placeholder="Register Number" required>
@@ -202,6 +343,20 @@ function uploadCert(){
             <button class="submit">Upload Certificate</button>
         </form>
         <div id="certMsg" class="message"></div>
+    </div>
+
+    <!-- MANAGE USERS & SCORES -->
+    <div id="manage" class="card">
+        <div class="manage-tabs">
+            <button id="tabUsers" class="active" onclick="showManage('users')">Manage Users</button>
+            <button id="tabScores" onclick="showManage('scores')">Manage Scores</button>
+        </div>
+        <div id="manageUsers">
+            <div id="usersTable"></div>
+        </div>
+        <div id="manageScores" style="display:none">
+            <div id="scoresTable"></div>
+        </div>
     </div>
 
 </div>
