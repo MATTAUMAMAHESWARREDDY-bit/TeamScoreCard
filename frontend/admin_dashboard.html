@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Admin Dashboard</title>
+
+<style>
+body{
+    margin:0;
+    font-family:Segoe UI, Arial;
+    background:#eef1f5;
+}
+
+/* LEFT MENU */
+.sidebar{
+    width:240px;
+    height:100vh;
+    background:#1e293b;
+    color:white;
+    position:fixed;
+}
+
+.sidebar h2{
+    text-align:center;
+    padding:25px;
+    border-bottom:1px solid #ffffff30;
+}
+
+.sidebar button{
+    width:100%;
+    padding:16px;
+    border:none;
+    background:none;
+    color:white;
+    text-align:left;
+    font-size:15px;
+    cursor:pointer;
+}
+
+.sidebar button:hover{
+    background:#334155;
+}
+
+/* RIGHT CONTENT */
+.main{
+    margin-left:240px;
+    padding:60px;
+}
+
+.card{
+    background:white;
+    width:520px;
+    padding:35px;
+    border-radius:16px;
+    box-shadow:0 12px 25px rgba(0,0,0,0.12);
+    animation:fade 0.4s;
+    margin-bottom:25px;
+}
+
+@keyframes fade{
+    from{opacity:0;transform:translateY(10px);}
+    to{opacity:1;transform:translateY(0);}
+}
+
+.card h3{
+    margin-bottom:20px;
+    color:#1e293b;
+}
+
+input,button.submit{
+    width:100%;
+    padding:12px;
+    margin:12px 0;
+    border-radius:8px;
+    border:1px solid #cbd5e1;
+    font-size:15px;
+}
+
+button.submit{
+    background:#2563eb;
+    color:white;
+    border:none;
+    cursor:pointer;
+}
+
+button.submit:hover{
+    background:#1d4ed8;
+}
+
+.message{
+    color: green;
+    font-weight: bold;
+    margin-top: 8px;
+}
+.error{
+    color: red;
+}
+</style>
+
+<script>
+// Show sections
+function show(section){
+    document.getElementById("user").style.display="none";
+    document.getElementById("score").style.display="none";
+    document.getElementById("cert").style.display="none";
+    document.getElementById(section).style.display="block";
+}
+
+// Add User
+function addUser(){
+    const form = document.getElementById("userForm");
+    const formData = new FormData(form);
+
+    fetch("/add_user", {method:"POST", body:formData})
+    .then(res=>res.json())
+    .then(data=>{
+        const msg = document.getElementById("userMsg");
+        msg.textContent = data.message;
+        msg.className = data.message.includes("success") ? "message" : "message error";
+        if(data.message.includes("success")) form.reset();
+    });
+}
+
+// Add Score
+function addScore(){
+    const form = document.getElementById("scoreForm");
+    const formData = new FormData(form);
+
+    fetch("/add_score",{method:"POST", body:formData})
+    .then(res=>res.json())
+    .then(data=>{
+        const msg = document.getElementById("scoreMsg");
+        msg.textContent = data.message;
+        msg.className = "message";
+        form.reset();
+    });
+}
+
+// Upload Certificate
+function uploadCert(){
+    const form = document.getElementById("certForm");
+    const formData = new FormData(form);
+
+    fetch("/add_certificate",{method:"POST", body:formData})
+    .then(res=>res.json())
+    .then(data=>{
+        const msg = document.getElementById("certMsg");
+        msg.textContent = data.message;
+        msg.className = "message";
+        form.reset();
+    });
+}
+</script>
+
+</head>
+<body>
+
+<!-- LEFT PANEL -->
+<div class="sidebar">
+    <h2>Admin Dashboard</h2>
+    <button onclick="show('user')">Add User</button>
+    <button onclick="show('score')">Add Score</button>
+    <button onclick="show('cert')">Add Certificate</button>
+    <button onclick="window.location.href='/login'">Logout</button>
+</div>
+
+<!-- RIGHT SIDE -->
+<div class="main">
+
+    <!-- ADD USER -->
+    <div id="user" class="card">
+        <h3>Add User Details</h3>
+        <form id="userForm" onsubmit="event.preventDefault(); addUser();">
+            <input name="name" placeholder="Name" required>
+            <input name="teamname" placeholder="Team Name" required>
+            <input name="teamno" placeholder="Team Number" required>
+            <input name="regno" placeholder="Register Number" required>
+            <input name="email" placeholder="Email Address" required>
+            <input name="dob" placeholder="Date of Birth (optional)">
+            <button class="submit">Save User</button>
+        </form>
+        <div id="userMsg" class="message"></div>
+    </div>
+
+    <!-- ADD SCORE -->
+    <div id="score" class="card" style="display:none">
+        <h3>Add Team Score</h3>
+        <form id="scoreForm" onsubmit="event.preventDefault(); addScore();">
+            <input name="teamno" placeholder="Team Number" required>
+            <input name="teamname" placeholder="Team Name" required>
+            <input name="score" type="number" placeholder="Score" required>
+            <button class="submit">Save Score</button>
+        </form>
+        <div id="scoreMsg" class="message"></div>
+    </div>
+
+    <!-- UPLOAD CERTIFICATE -->
+    <div id="cert" class="card" style="display:none">
+        <h3>Add Certificate</h3>
+        <form id="certForm" onsubmit="event.preventDefault(); uploadCert();" enctype="multipart/form-data">
+            <input name="regno" placeholder="Register Number" required>
+            <input name="certificate" type="file" required>
+            <button class="submit">Upload Certificate</button>
+        </form>
+        <div id="certMsg" class="message"></div>
+    </div>
+
+</div>
+</body>
+</html>

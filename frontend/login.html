@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Login</title>
+
+<style>
+body{
+    margin:0;
+    height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    background:linear-gradient(135deg,#667eea,#764ba2);
+    font-family:Segoe UI, Arial;
+}
+
+.login-box{
+    width:380px;
+    background:white;
+    padding:45px;
+    border-radius:20px;
+    box-shadow:0 20px 40px rgba(0,0,0,0.25);
+}
+
+.login-box h2{
+    text-align:center;
+    margin-bottom:30px;
+    color:#333;
+    font-weight:600;
+}
+
+input{
+    width:100%;
+    padding:14px;
+    margin:12px 0;
+    border-radius:10px;
+    border:1px solid #ccc;
+    font-size:15px;
+}
+
+button{
+    width:100%;
+    padding:14px;
+    margin-top:18px;
+    border:none;
+    border-radius:10px;
+    background:#667eea;
+    color:white;
+    font-size:16px;
+    cursor:pointer;
+}
+
+button:hover{
+    background:#5a67d8;
+}
+
+.footer{
+    text-align:center;
+    margin-top:22px;
+    font-size:13px;
+    color:#666;
+}
+</style>
+</head>
+
+<body>
+
+<div class="login-box">
+    <h2>Kalasalingam University</h2>
+
+    <!-- Fixed: submit to backend /login -->
+    <form id="loginForm" method="POST" action="/login">
+        <input type="text" name="username"
+               placeholder="Register Number"
+               required>
+
+        <input type="password" name="password"
+               placeholder="Team Number"
+               required>
+
+        <button type="submit">Login</button>
+    </form>
+
+    <div class="footer">
+        Login using Register Number and Team Number
+    </div>
+</div>
+
+<script>
+// Optional: store regno in sessionStorage to use in user dashboard
+document.getElementById("loginForm").addEventListener("submit", function(e){
+    const regno = document.querySelector("input[name='username']").value;
+    sessionStorage.setItem("regno", regno);
+});
+</script>
+
+</body>
+</html>
