@@ -13,7 +13,7 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 # -----------------------------
 # Config
 # -----------------------------
-DB_PATH = os.path.join(os.getcwd(), "database.db")
+DB_PATH = os.path.join(os.getcwd(), "database.db")  # SQLite database
 
 app = Flask(
     __name__,
@@ -53,7 +53,7 @@ def init_db():
         )
     """)
 
-    # Scores table (with auto-increment id)
+    # Scores table
     cur.execute("""
         CREATE TABLE IF NOT EXISTS scores (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -97,7 +97,9 @@ def login():
         cur.execute("SELECT * FROM users WHERE regno=? AND teamno=?", (username, password))
         if cur.fetchone():
             conn.close()
-            return redirect(f"/user_dashboard.html?regno={username}")
+            response = redirect("/user_dashboard.html")
+            response.set_cookie("regno", username)
+            return response
 
         conn.close()
         return """<script>alert('Invalid Register Number or Team Number');window.location.href='/';</script>"""
@@ -177,7 +179,39 @@ def add_certificate():
     return "Certificate uploaded successfully"
 
 # -----------------------------
-# Get Users (for manage section)
+# Get Profile
+# -----------------------------
+@app.route("/get_profile/<regno>")
+def get_profile(regno):
+    conn = sqlite3.connect(DB_PATH)
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM users WHERE regno=?", (regno,))
+    user = cur.fetchone()
+    conn.close()
+    if user:
+        return jsonify({
+            "regno": user[0],
+            "name": user[1],
+            "teamname": user[2],
+            "teamno": user[3],
+            "email": user[4]
+        })
+    return jsonify({"error": "User not found"})
+
+# -----------------------------
+# Get Scores (user)
+# -----------------------------
+@app.route("/get_scores")
+def get_scores():
+    conn = sqlite3.connect(DB_PATH)
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM scores ORDER BY score DESC")
+    scores = cur.fetchall()
+    conn.close()
+    return jsonify({"scores": scores})
+
+# -----------------------------
+# Admin: Get Users
 # -----------------------------
 @app.route("/get_users")
 def get_users():
@@ -189,7 +223,7 @@ def get_users():
     return jsonify({"users": users})
 
 # -----------------------------
-# Get Scores (admin)
+# Admin: Get Scores
 # -----------------------------
 @app.route("/get_scores_admin")
 def get_scores_admin():
@@ -222,7 +256,21 @@ def delete_score(id):
     cur.execute("DELETE FROM scores WHERE id=?", (id,))
     conn.commit()
     conn.close()
-    return jsonify({"message": f"Score deleted successfully"})
+    return jsonify({"message": "Score deleted successfully"})
+
+# -----------------------------
+# Download Certificate
+# -----------------------------
+@app.route("/download_certificate/<regno>")
+def download_certificate(regno):
+    conn = sqlite3.connect(DB_PATH)
+    cur = conn.cursor()
+    cur.execute("SELECT filename FROM certificates WHERE regno=?", (regno,))
+    row = cur.fetchone()
+    conn.close()
+    if row:
+        return send_from_directory(UPLOAD_FOLDER, row[0], as_attachment=True)
+    return "Certificate not found"
 
 # -----------------------------
 # Run App

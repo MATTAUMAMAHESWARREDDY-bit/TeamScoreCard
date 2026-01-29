@@ -103,10 +103,19 @@ function show(section){
 }
 
 // -----------------------------
+// Get cookie
+// -----------------------------
+function getCookie(name){
+    const value = "; " + document.cookie;
+    const parts = value.split("; " + name + "=");
+    if(parts.length === 2) return parts.pop().split(";").shift();
+}
+
+// -----------------------------
 // Fetch profile
 // -----------------------------
 async function loadProfile() {
-    const regno = sessionStorage.getItem("regno");
+    const regno = getCookie("regno");
     if(!regno) return alert("No user logged in!");
 
     try {
@@ -118,12 +127,15 @@ async function loadProfile() {
             return;
         }
 
-        // fill profile
+        // Fill profile
         document.getElementById("name").innerText = data.name;
         document.getElementById("teamname").innerText = data.teamname;
         document.getElementById("teamno").innerText = data.teamno;
         document.getElementById("regno").innerText = data.regno;
         document.getElementById("email").innerText = data.email;
+
+        // Pre-fill certificate input
+        document.getElementById("certRegno").value = data.regno;
 
     } catch(err){
         console.error(err);
@@ -144,7 +156,7 @@ async function loadScores() {
         if(data.scores){
             data.scores.forEach(item => {
                 const p = document.createElement("p");
-                p.innerText = `Team ${item[0]} (${item[1]}): ${item[2]}`;
+                p.innerText = `Team ${item[1]} (${item[2]}): ${item[3]}`;
                 scoresDiv.appendChild(p);
             });
         }
